@@ -1,0 +1,5 @@
+{
+  "name": "Enterprise Complaint Management System",
+  "description": "A production-ready, full-stack system for managing user complaints with role-based access control, real-time updates, and advanced analytics.",
+  "requestFramePermissions": []
+}

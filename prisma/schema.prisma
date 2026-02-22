@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  STAFF
+  ADMIN
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id                 String      @id @default(cuid())
+  name               String
+  email              String      @unique
+  password           String
+  role               String      @default("USER") // Using String for SQLite compatibility with enums if needed, but Prisma handles enums in SQLite by mapping to strings
+  departmentId       String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  
+  department         Department? @relation(fields: [departmentId], references: [id])
+  complaints         Complaint[] @relation("UserComplaints")
+  assignedComplaints Complaint[] @relation("AssignedComplaints")
+  comments           Comment[]
+}
+
+model Department {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  users       User[]
+  categories  Category[]
+}
+
+model Category {
+  id           String      @id @default(cuid())
+  name         String
+  departmentId String
+  department   Department  @relation(fields: [departmentId], references: [id])
+  complaints   Complaint[]
+}
+
+model Complaint {
+  id           String      @id @default(cuid())
+  title        String
+  description  String
+  categoryId   String
+  userId       String
+  assignedToId String?
+  status       String      @default("OPEN")
+  priority     String      @default("MEDIUM")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  resolvedAt   DateTime?
+
+  category     Category    @relation(fields: [categoryId], references: [id])
+  user         User        @relation("UserComplaints", fields: [userId], references: [id])
+  assignedTo   User?       @relation("AssignedComplaints", fields: [assignedToId], references: [id])
+  attachments  Attachment[]
+  comments     Comment[]
+}
+
+model Comment {
+  id          String    @id @default(cuid())
+  complaintId String
+  userId      String
+  message     String
+  createdAt   DateTime  @default(now())
+
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+model Attachment {
+  id          String    @id @default(cuid())
+  complaintId String
+  fileUrl     String
+  fileType    String
+  createdAt   DateTime  @default(now())
+
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+}
